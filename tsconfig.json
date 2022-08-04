@@ -2,7 +2,7 @@
   "compilerOptions": {
     /* Include Typescript declaration files */
     "declaration": true,
-    "emitDeclarationOnly": true,
+    //"emitDeclarationOnly": true,
 
     /* Basic Options */
     "target": "es2015",
