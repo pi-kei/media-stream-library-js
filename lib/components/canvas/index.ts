@@ -134,6 +134,7 @@ export class CanvasSink extends Sink {
       const img = new Image()
       img.onload = () => {
         ctx2d.drawImage(img, 0, 0)
+        window.URL.revokeObjectURL(img.src)
       }
       drawImageBlob = ({ blob }) => {
         info.renderedFrames++
