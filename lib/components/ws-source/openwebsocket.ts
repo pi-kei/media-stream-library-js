@@ -55,6 +55,7 @@ export const openWebSocket = async (
       const countdown = setTimeout(() => {
         clearTimeout(countdown)
         if (ws.readyState === WebSocket.CONNECTING) {
+          ws.onopen = null
           ws.onerror = null
           reject(new Error('websocket connection timed out'))
         }
@@ -62,6 +63,12 @@ export const openWebSocket = async (
       ws.binaryType = 'arraybuffer'
       ws.onerror = (originalError: Event) => {
         clearTimeout(countdown)
+        if (!tokenUri) {
+          ws.onopen = null
+          ws.onerror = null
+          reject(originalError)
+          return
+        }
         // try fetching an authentication token
         function onLoadToken(this: XMLHttpRequest) {
           if (this.status >= 400) {
