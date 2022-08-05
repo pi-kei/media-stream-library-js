@@ -25,12 +25,16 @@ export interface WsRtspMetadataConfig {
  *
  * Handlers that can be set on the pipeline:
  * - all handlers inherited from the RtspPipeline
- * - `onServerClose`: called when the WebSocket server closes the connection
- *   (only then, not when the connection is closed in a different way)
+ * - `onSocketClose`: called when the WebSocket closes the connection
  *
  */
 export class MetadataPipeline extends RtspPipeline {
-  public onServerClose?: () => void
+  public onSocketClose?: (
+    code: number,
+    reason: string,
+    wasClean: boolean,
+  ) => void
+
   public ready: Promise<void>
 
   private _src?: WSSource
@@ -51,8 +55,8 @@ export class MetadataPipeline extends RtspPipeline {
 
     const waitForWs = WSSource.open(wsConfig)
     this.ready = waitForWs.then((wsSource) => {
-      wsSource.onServerClose = () => {
-        this.onServerClose && this.onServerClose()
+      wsSource.onSocketClose = (code, reason, wasClean) => {
+        this.onSocketClose && this.onSocketClose(code, reason, wasClean)
       }
       this.prepend(wsSource)
       this._src = wsSource

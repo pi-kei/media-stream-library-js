@@ -23,13 +23,17 @@ export interface Html5CanvasConfig {
  * - all handlers inherited from the RtspMjpegPipeline
  * - `onSync`: called when the NTP time of the first frame is known, with the
  *   timestamp as argument (the timestamp is UNIX milliseconds)
- * - `onServerClose`: called when the WebSocket server closes the connection
- *   (only then, not when the connection is closed in a different way)
+ * - `onSocketClose`: called when the WebSocket closes the connection
  */
 export class Html5CanvasPipeline extends RtspMjpegPipeline {
   public onCanplay?: () => void
   public onSync?: (ntpPresentationTime: number) => void
-  public onServerClose?: () => void
+  public onSocketClose?: (
+    code: number,
+    reason: string,
+    wasClean: boolean,
+  ) => void
+
   public ready: Promise<void>
 
   private _src?: WSSource
@@ -63,8 +67,8 @@ export class Html5CanvasPipeline extends RtspMjpegPipeline {
 
     const waitForWs = WSSource.open(wsConfig)
     this.ready = waitForWs.then((wsSource) => {
-      wsSource.onServerClose = () => {
-        this.onServerClose && this.onServerClose()
+      wsSource.onSocketClose = (code, reason, wasClean) => {
+        this.onSocketClose && this.onSocketClose(code, reason, wasClean)
       }
       this.prepend(wsSource)
       this._src = wsSource
@@ -73,6 +77,10 @@ export class Html5CanvasPipeline extends RtspMjpegPipeline {
 
   close() {
     this._src && this._src.outgoing.end()
+  }
+
+  get socketState() {
+    return this._src?.socketState ?? WebSocket.CONNECTING
   }
 
   get currentTime() {

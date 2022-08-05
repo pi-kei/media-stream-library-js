@@ -4,12 +4,13 @@ import { Readable, Writable } from 'stream'
 import { MessageType } from '../message'
 import { openWebSocket, WSConfig } from './openwebsocket'
 
-// Named status codes for CloseEvent, see:
-// https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent
-const CLOSE_GOING_AWAY = 1001
-
 export class WSSource extends Source {
-  public onServerClose?: () => void
+  private readonly _socket: WebSocket
+  public onSocketClose?: (
+    code: number,
+    reason: string,
+    wasClean: boolean,
+  ) => void
 
   /**
    * Create a WebSocket component.
@@ -93,9 +94,7 @@ export class WSSource extends Source {
      */
     socket.onclose = (e) => {
       debug('msl:websocket:close')(`${e.code}`)
-      if (e.code === CLOSE_GOING_AWAY) {
-        this.onServerClose && this.onServerClose()
-      }
+      this.onSocketClose && this.onSocketClose(e.code, e.reason, e.wasClean)
       // Terminate the streams.
       incoming.push(null)
       outgoing.end()
@@ -105,6 +104,12 @@ export class WSSource extends Source {
      * initialize the component.
      */
     super(incoming, outgoing)
+
+    this._socket = socket
+  }
+
+  get socketState() {
+    return this._socket.readyState
   }
 
   /**

@@ -18,7 +18,12 @@ export interface TransformConfig {
  * immediately tears down the RTSP session.
  */
 export class WsSdpPipeline extends RtspPipeline {
-  public onServerClose?: () => void
+  public onSocketClose?: (
+    code: number,
+    reason: string,
+    wasClean: boolean,
+  ) => void
+
   public ready: Promise<void>
 
   private _src?: WSSource
@@ -35,8 +40,8 @@ export class WsSdpPipeline extends RtspPipeline {
 
     const waitForWs = WSSource.open(wsConfig)
     this.ready = waitForWs.then((wsSource) => {
-      wsSource.onServerClose = () => {
-        this.onServerClose && this.onServerClose()
+      wsSource.onSocketClose = (code, reason, wasClean) => {
+        this.onSocketClose && this.onSocketClose(code, reason, wasClean)
       }
       this.prepend(wsSource)
       this._src = wsSource

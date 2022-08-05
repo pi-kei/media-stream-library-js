@@ -22,13 +22,17 @@ export interface Html5VideoConfig {
  *
  * Handlers that can be set on the pipeline:
  * - all handlers inherited from the RtspMp4Pipeline
- * - `onServerClose`: called when the WebSocket server closes the connection
- *   (only then, not when the connection is closed in a different way)
+ * - `onSocketClose`: called when the WebSocket closes the connection
  *
  */
 export class Html5VideoPipeline extends RtspMp4Pipeline {
   public onSourceOpen?: (mse: MediaSource, tracks: MediaTrack[]) => void
-  public onServerClose?: () => void
+  public onSocketClose?: (
+    code: number,
+    reason: string,
+    wasClean: boolean,
+  ) => void
+
   public ready: Promise<void>
   public tracks?: MediaTrack[]
 
@@ -60,8 +64,8 @@ export class Html5VideoPipeline extends RtspMp4Pipeline {
 
     const waitForWs = WSSource.open(wsConfig)
     this.ready = waitForWs.then((wsSource) => {
-      wsSource.onServerClose = () => {
-        this.onServerClose && this.onServerClose()
+      wsSource.onSocketClose = (code, reason, wasClean) => {
+        this.onSocketClose && this.onSocketClose(code, reason, wasClean)
       }
       this.prepend(wsSource)
       this._src = wsSource
@@ -70,6 +74,10 @@ export class Html5VideoPipeline extends RtspMp4Pipeline {
 
   close() {
     this._src && this._src.outgoing.end()
+  }
+
+  get socketState() {
+    return this._src?.socketState ?? WebSocket.CONNECTING
   }
 
   get currentTime() {
