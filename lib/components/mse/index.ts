@@ -182,7 +182,7 @@ export class MseSink extends Sink {
         const start = sourceBuffer.buffered.start(index)
         const end = sourceBuffer.buffered.end(index) - 10
         try {
-          // remove all material up to 10 seconds before current time
+          // remove all material except last 10 seconds
           if (end > start) {
             sourceBuffer.remove(start, end)
 
