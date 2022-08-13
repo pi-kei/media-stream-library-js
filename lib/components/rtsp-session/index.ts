@@ -114,6 +114,7 @@ export class RtspSession extends Tube {
   public n0?: { [key: number]: number }
   public clockrates?: { [key: number]: number }
   public startTime?: number
+  public startTimeUnit?: 'npt' | 'clock'
 
   public onRtcp?: (rtcp: Rtcp) => void
   public onSdp?: (sdp: Sdp) => void
@@ -405,7 +406,11 @@ export class RtspSession extends Tube {
       this._enqueue({
         method: RTSP_METHOD.PLAY,
         headers: {
-          Range: `npt=${this.startTime || 0}-`,
+          Range: `${this.startTimeUnit || 'npt'}=${
+            this.startTimeUnit === 'clock'
+              ? new Date(this.startTime || 0).toISOString().replace(/[-:]/g, '')
+              : this.startTime || 0
+          }-`,
         },
         uri: this._sessionControlURL,
       })
@@ -417,11 +422,13 @@ export class RtspSession extends Tube {
    * Set up command queue in order to start playing, i.e. PLAY optionally
    * preceeded by OPTIONS/DESCRIBE commands. If not waiting, immediately
    * start sending.
-   * @param  startTime - Time (seconds) at which to start playing
+   * @param  startTime - Time (seconds or UTC time) at which to start playing
+   * @param  startTimeUnit - npt (seconds) or clock (UTC time)
    */
-  play(startTime = 0) {
+  play(startTime: number = 0, startTimeUnit: 'npt' | 'clock' = 'npt') {
     if (this._state === STATE.IDLE) {
       this.startTime = Number(startTime) || 0
+      this.startTimeUnit = startTimeUnit
       this._enqueue({ method: RTSP_METHOD.OPTIONS })
       this._enqueue({ method: RTSP_METHOD.DESCRIBE })
     } else if (this._state === STATE.PAUSED) {
