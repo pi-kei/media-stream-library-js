@@ -180,7 +180,7 @@ export class MseSink extends Sink {
 
         const index = sourceBuffer.buffered.length - 1
         const start = sourceBuffer.buffered.start(index)
-        const end = Math.min(el.currentTime, this._lastCheckpointTime) - 10
+        const end = sourceBuffer.buffered.end(index) - 10
         try {
           // remove all material up to 10 seconds before current time
           if (end > start) {
