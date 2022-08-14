@@ -181,6 +181,9 @@ export class RtspSession extends Tube {
     incoming.on('end', () => {
       // Incoming was ended, assume that outgoing is closed as well
       this._outgoingClosed = true
+      if (this._renewSessionInterval !== null) {
+        clearInterval(this._renewSessionInterval)
+      }
     })
 
     super(incoming)
