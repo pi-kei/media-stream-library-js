@@ -316,7 +316,7 @@ export class RtspSession extends Tube {
         this.onError(new RTSPResponseError(msg.data.toString('ascii'), status))
     }
 
-    if (method === RTSP_METHOD.PLAY) {
+    if (status === 200 && method === RTSP_METHOD.PLAY) {
       // When starting to play, send the actual range to an external handler.
       this.onPlay && this.onPlay(range(msg.data))
     }
