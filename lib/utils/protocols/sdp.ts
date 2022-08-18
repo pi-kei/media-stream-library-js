@@ -16,7 +16,13 @@ interface BandwidthField {
 // RTSP extensions: https://tools.ietf.org/html/rfc7826 (22.15)
 // exists on both session and media level
 interface RtspExtensions {
-  readonly range?: string
+  readonly range?: {
+    unit: string
+    rawStart: string
+    rawEnd: string
+    start?: number
+    end?: number
+  }
   readonly control?: string
   readonly mtag?: string
 }
