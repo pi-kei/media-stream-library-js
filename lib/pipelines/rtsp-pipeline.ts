@@ -18,7 +18,18 @@ import { Sdp } from '../utils/protocols/sdp'
  */
 export class RtspPipeline extends Pipeline {
   public onSdp?: (sdp: Sdp) => void
-  public onPlay?: (range: string[] | undefined) => void
+  public onPlay?: (
+    range:
+      | {
+          unit: string
+          rawStart: string
+          rawEnd: string
+          start?: number
+          end?: number
+        }
+      | undefined,
+  ) => void
+
   public rtsp: RtspSession
 
   constructor(rtspConfig?: RtspConfig) {

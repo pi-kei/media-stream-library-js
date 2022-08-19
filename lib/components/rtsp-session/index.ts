@@ -119,7 +119,13 @@ export class RtspSession extends Tube {
   public onRtcp?: (rtcp: Rtcp) => void
   public onSdp?: (sdp: Sdp) => void
   public onError?: (err: RTSPResponseError) => void
-  public onPlay?: (range?: string[]) => void
+  public onPlay?: (range?: {
+    unit: string
+    rawStart: string
+    rawEnd: string
+    start?: number
+    end?: number
+  }) => void
 
   public retry?: () => void
 

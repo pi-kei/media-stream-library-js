@@ -131,6 +131,58 @@ export const connectionEnded = (buffer: Buffer) => {
   return connectionToken !== null && connectionToken.toLowerCase() === 'close'
 }
 
+const splitOnFirst = (c: string, text: string) => {
+  const p = text.indexOf(c)
+  if (p < 0) {
+    return [text.slice(0)]
+  } else {
+    return [text.slice(0, p), text.slice(p + 1)]
+  }
+}
+
+/**
+ * @see https://www.rfc-editor.org/rfc/rfc2326.html#section-3.6
+ * @param value String value of start or end of the range.
+ * @param isStart When true empty value means 0.
+ * @returns Amount of seconds.
+ */
+const parseNptSecs = (value: string, isStart: boolean = false): number => {
+  if (isStart && !value) {
+    return 0
+  } else if (!value || value === 'now') {
+    return NaN
+  }
+  const match = value.match(/^(((\d+):)?(\d+):)?(\d+(\.\d+)?)$/)
+  if (!match) {
+    return NaN
+  }
+  let secs = Number(match[5])
+  if (match[4]) {
+    secs += Number(match[4]) * 60
+  }
+  if (match[3]) {
+    secs += Number(match[3]) * 60 * 60
+  }
+  return secs
+}
+
+/**
+ * @see https://www.rfc-editor.org/rfc/rfc2326.html#section-3.7
+ * @param value String value of start or end of the range.
+ * @returns Returns the same as {@link Date#valueOf}
+ */
+const parseUtcTime = (value: string): number => {
+  if (!value) {
+    return NaN
+  }
+  return new Date(
+    value.replace(
+      /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(\.(\d+))?Z$/,
+      '$1-$2-$3T$4:$5:$6$7Z',
+    ),
+  ).valueOf()
+}
+
 export const range = (buffer: Buffer) => {
   /**
    * Range              =  "Range" HCOLON ranges-spec
@@ -154,9 +206,30 @@ export const range = (buffer: Buffer) => {
   // Example range headers:
   // Range: npt=now-
   // Range: npt=1154.598701-3610.259146
-  const npt = extractHeaderValue(buffer, 'Range')
-  if (npt !== null) {
-    return npt.split('=')[1].split('-')
+  const value = extractHeaderValue(buffer, 'Range')
+  if (value !== null) {
+    const [unit, range] = splitOnFirst('=', value)
+    const [start, end] = range.split('-')
+    const output: {
+      unit: string
+      rawStart: string
+      rawEnd: string
+      start?: number
+      end?: number
+    } = {
+      unit,
+      rawStart: start,
+      rawEnd: end,
+    }
+    if (unit === 'npt') {
+      output.start = parseNptSecs(start, true)
+      output.end = parseNptSecs(end)
+    } else if (unit === 'clock') {
+      output.start = parseUtcTime(start)
+      output.end = parseUtcTime(end)
+    }
+    // SMPTE (not parsed)
+    return output
   }
   return undefined
 }
