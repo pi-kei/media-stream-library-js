@@ -456,6 +456,31 @@ export class RtspSession extends Tube {
     this._dequeue()
   }
 
+  playImmediate(startTime: number = 0, startTimeUnit: 'npt' | 'clock' = 'npt') {
+    if (this._state === STATE.PLAYING) {
+      if (this._sessionId === null || this._sessionId === undefined) {
+        throw new Error('rtsp: internal error')
+      }
+      this._enqueue({ method: RTSP_METHOD.PAUSE })
+      this.startTime = Number(startTime) || 0
+      this.startTimeUnit = startTimeUnit
+      this._enqueue({
+        method: RTSP_METHOD.PLAY,
+        headers: {
+          Session: this._sessionId,
+          Range: `${this.startTimeUnit || 'npt'}=${
+            this.startTimeUnit === 'clock'
+              ? new Date(this.startTime || 0).toISOString().replace(/[-:]/g, '')
+              : this.startTime || 0
+          }-`,
+          // Immediate: 'yes',
+        },
+        uri: this._sessionControlURL,
+      })
+      this._dequeue()
+    }
+  }
+
   /**
    * Queue a pause command, and send if not waiting.
    * @return {undefined}

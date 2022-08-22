@@ -217,10 +217,16 @@ export class BoxBuilder {
     // The RTP timestamps are unsigned 32 bit and will overflow
     // at some point. We can guard against the overflow by ORing with 0,
     // which will bring any difference back into signed 32-bit domain.
-    const duration =
+    let duration =
       trackData.lastTimestamp !== 0
         ? (timestamp - trackData.lastTimestamp) | 0
         : trackData.defaultFrameDuration
+
+    // This is a fix but not the best solution
+    // See https://github.com/AxisCommunications/media-stream-library-js/pull/652
+    if (duration < 0) {
+      duration = trackData.defaultFrameDuration
+    }
 
     trackData.lastTimestamp = timestamp
 
