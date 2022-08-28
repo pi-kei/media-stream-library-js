@@ -457,11 +457,13 @@ export class RtspSession extends Tube {
   }
 
   playImmediate(startTime: number = 0, startTimeUnit: 'npt' | 'clock' = 'npt') {
-    if (this._state === STATE.PLAYING) {
+    if (this._state === STATE.PLAYING || this._state === STATE.PAUSED) {
       if (this._sessionId === null || this._sessionId === undefined) {
         throw new Error('rtsp: internal error')
       }
-      this._enqueue({ method: RTSP_METHOD.PAUSE })
+      if (this._state !== STATE.PAUSED) {
+        this._enqueue({ method: RTSP_METHOD.PAUSE })
+      }
       this.startTime = Number(startTime) || 0
       this.startTimeUnit = startTimeUnit
       this._enqueue({

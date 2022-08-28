@@ -204,10 +204,15 @@ export class MseSink extends Sink {
   }
 
   async play(): Promise<void> {
-    return await this._videoEl.play()
+    if (this._videoEl.paused) {
+      return await this._videoEl.play()
+    }
+    return await Promise.resolve()
   }
 
   pause(): void {
-    return this._videoEl.pause()
+    if (!this._videoEl.paused) {
+      return this._videoEl.pause()
+    }
   }
 }
